@@ -156,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'gameover';
         finalScoreEl.textContent = score;
         scoreDisplay.classList.add('hidden');
-        levelDisplay.classList.add('hidden');
         gameOverMenu.classList.remove('hidden');
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         
