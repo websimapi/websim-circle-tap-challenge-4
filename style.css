@@ -84,14 +84,11 @@ html, body {
     z-index: 1; /* Ensure menus are on top of the level display */
 }
 
-#start-menu h1, #game-over-menu h2 {
-    margin-top: 0;
-    color: var(--accent-color);
-}
-
 #game-over-menu {
     flex-direction: column;
     gap: 10px;
+    position: absolute;
+    bottom: 10vh;
 }
 
 #difficulty-selection {

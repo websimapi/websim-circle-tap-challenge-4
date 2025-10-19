@@ -172,10 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
             timestamp: performance.now(),
         });
 
-        // After 3 seconds, hide the level display and show the game over menu.
+        // Show game over menu immediately, and hide level display after a delay
+        gameOverMenu.classList.remove('hidden');
         setTimeout(() => {
             levelDisplay.classList.add('hidden');
-            gameOverMenu.classList.remove('hidden');
         }, 3000);
     }
 
