@@ -73,6 +73,40 @@ const GameCanvas = ({ frameData, config }) => {
     columnNumber: 9
   });
 };
+const LevelUpAnimation = ({ level, durationInFrames }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const bounceIn = spring({
+    frame,
+    fps,
+    config: { stiffness: 150, damping: 10 },
+    durationInFrames: 15
+  });
+  const bounceOutProgress = interpolate(
+    frame,
+    [durationInFrames - 12, durationInFrames],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const bounceOut = 1 - bounceOutProgress;
+  const translateX = interpolate(bounceOutProgress, [0, 1], [0, 200]);
+  const scale = frame < durationInFrames - 12 ? bounceIn : bounceOut;
+  const opacity = scale;
+  return /* @__PURE__ */ jsxDEV("div", { style: {
+    position: "absolute",
+    fontSize: "8rem",
+    fontWeight: "bold",
+    color: "rgba(220, 220, 220, 0.5)",
+    textShadow: "0 0 10px rgba(0,0,0,0.5)",
+    opacity,
+    transform: `scale(${scale}) translateX(${translateX}%)`,
+    zIndex: -1
+  }, children: level }, void 0, false, {
+    fileName: "<stdin>",
+    lineNumber: 73,
+    columnNumber: 9
+  });
+};
 const LevelDisplay = ({ level, isVisible }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -96,7 +130,7 @@ const LevelDisplay = ({ level, isVisible }) => {
     zIndex: -1
   }, children: level }, void 0, false, {
     fileName: "<stdin>",
-    lineNumber: 62,
+    lineNumber: 104,
     columnNumber: 9
   });
 };
@@ -117,27 +151,27 @@ const EndScreenOverlay = ({ score, user, isGameOver }) => {
     user && /* @__PURE__ */ jsxDEV("div", { style: { position: "absolute", top: "20px", left: "20px", display: "flex", alignItems: "center", gap: "10px", transform: `scale(${scaleIn})` }, children: [
       /* @__PURE__ */ jsxDEV(Img, { src: user.avatar_url, style: { width: "50px", height: "50px", borderRadius: "50%" } }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 99,
+        lineNumber: 141,
         columnNumber: 21
       }),
       /* @__PURE__ */ jsxDEV("span", { style: { fontSize: "24px", fontWeight: "bold", textShadow: "2px 2px 4px #000" }, children: user.username }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 100,
+        lineNumber: 142,
         columnNumber: 21
       })
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 98,
+      lineNumber: 140,
       columnNumber: 18
     }),
     /* @__PURE__ */ jsxDEV("div", { style: { position: "absolute", top: "30px", right: "20px", fontSize: "24px", fontWeight: "bold", textShadow: "2px 2px 4px #000", transform: `scale(${scaleIn})` }, children: finalScoreText }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 106,
+      lineNumber: 148,
       columnNumber: 13
     })
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 95,
+    lineNumber: 137,
     columnNumber: 9
   });
 };
@@ -146,7 +180,7 @@ const ReplayComposition = ({ replayData }) => {
   if (!replayData || !replayData.frames || replayData.frames.length < 2) {
     return /* @__PURE__ */ jsxDEV(AbsoluteFill, { style: { backgroundColor: "#1a1a2e", color: "white", justifyContent: "center", alignItems: "center" }, children: "Loading replay..." }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 117,
+      lineNumber: 159,
       columnNumber: 16
     });
   }
@@ -155,6 +189,19 @@ const ReplayComposition = ({ replayData }) => {
   const startTime = frames[0].timestamp;
   const gameEndTime = frames[frames.length - 1].timestamp;
   const gameEndFrame = Math.ceil((gameEndTime - startTime) / 1e3 * 30);
+  const levelUpEvents = frames.reduce((acc, f, index) => {
+    const prevLevel = index > 0 ? frames[index - 1].level : 0;
+    if (f.level > prevLevel) {
+      acc.push({
+        startFrame: Math.round((f.timestamp - startTime) / 1e3 * 30),
+        level: f.level
+      });
+    }
+    return acc;
+  }, []);
+  if (levelUpEvents.length === 0 || levelUpEvents[0].level > 1) {
+    levelUpEvents.unshift({ startFrame: 0, level: 1 });
+  }
   const currentTimestamp = startTime + frame / 30 * 1e3;
   let frameIndex;
   if (frame < gameEndFrame) {
@@ -175,41 +222,52 @@ const ReplayComposition = ({ replayData }) => {
       score
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 152,
+      lineNumber: 211,
       columnNumber: 21
     }) }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 151,
+      lineNumber: 210,
       columnNumber: 17
     }),
-    /* @__PURE__ */ jsxDEV(AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: [
-      /* @__PURE__ */ jsxDEV(LevelDisplay, { level, isVisible: !showEndScreen }, void 0, false, {
+    /* @__PURE__ */ jsxDEV(AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ jsxDEV("div", { style: { width: "90vmin", height: "90vmin" }, children: /* @__PURE__ */ jsxDEV(GameCanvas, { frameData: currentFrameData, config }, void 0, false, {
+      fileName: "<stdin>",
+      lineNumber: 220,
+      columnNumber: 21
+    }) }, void 0, false, {
+      fileName: "<stdin>",
+      lineNumber: 219,
+      columnNumber: 17
+    }) }, void 0, false, {
+      fileName: "<stdin>",
+      lineNumber: 218,
+      columnNumber: 13
+    }),
+    levelUpEvents.map((event, i) => {
+      const nextEventStart = i + 1 < levelUpEvents.length ? levelUpEvents[i + 1].startFrame : gameEndFrame;
+      const durationInFrames = nextEventStart - event.startFrame;
+      if (durationInFrames <= 0) return null;
+      return /* @__PURE__ */ jsxDEV(Sequence, { from: event.startFrame, durationInFrames, children: /* @__PURE__ */ jsxDEV(AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ jsxDEV(LevelUpAnimation, { level: event.level, durationInFrames }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 160,
-        columnNumber: 17
-      }),
-      /* @__PURE__ */ jsxDEV("div", { style: { width: "90vmin", height: "90vmin" }, children: /* @__PURE__ */ jsxDEV(GameCanvas, { frameData: currentFrameData, config }, void 0, false, {
-        fileName: "<stdin>",
-        lineNumber: 162,
-        columnNumber: 21
+        lineNumber: 234,
+        columnNumber: 29
       }) }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 161,
-        columnNumber: 17
-      })
-    ] }, void 0, true, {
-      fileName: "<stdin>",
-      lineNumber: 159,
-      columnNumber: 13
+        lineNumber: 233,
+        columnNumber: 26
+      }) }, `level-${event.level}`, false, {
+        fileName: "<stdin>",
+        lineNumber: 232,
+        columnNumber: 22
+      });
     }),
     showEndScreen && /* @__PURE__ */ jsxDEV(EndScreenOverlay, { score, user: currentUser, isGameOver }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 167,
+      lineNumber: 241,
       columnNumber: 32
     }),
     /* @__PURE__ */ jsxDEV(Audio, { src: "/start_sound.mp3", volume: 0.5 }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 170,
+      lineNumber: 244,
       columnNumber: 13
     }),
     successFrames.map((f, i) => {
@@ -217,11 +275,11 @@ const ReplayComposition = ({ replayData }) => {
       if (frameForAudio < gameEndFrame) {
         return /* @__PURE__ */ jsxDEV(Sequence, { from: frameForAudio, children: /* @__PURE__ */ jsxDEV(Audio, { src: "/success.mp3" }, void 0, false, {
           fileName: "<stdin>",
-          lineNumber: 178,
+          lineNumber: 252,
           columnNumber: 25
         }) }, `success-${i}`, false, {
           fileName: "<stdin>",
-          lineNumber: 177,
+          lineNumber: 251,
           columnNumber: 22
         });
       }
@@ -229,16 +287,16 @@ const ReplayComposition = ({ replayData }) => {
     }),
     isGameOver && /* @__PURE__ */ jsxDEV(Sequence, { from: gameEndFrame - 1, children: /* @__PURE__ */ jsxDEV(Audio, { src: "/fail.mp3" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 187,
+      lineNumber: 261,
       columnNumber: 21
     }) }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 186,
+      lineNumber: 260,
       columnNumber: 17
     })
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 148,
+    lineNumber: 207,
     columnNumber: 9
   });
 };
