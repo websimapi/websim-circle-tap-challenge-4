@@ -85,11 +85,23 @@ html, body {
 }
 
 #game-over-menu {
+    display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
     position: absolute;
     bottom: 30px;
-    padding: 15px 25px;
+    padding: 10px 20px;
+}
+
+#game-over-menu h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+#game-over-menu p {
+    margin: 0;
+    font-size: 1rem;
 }
 
 #game-over-buttons {
