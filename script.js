@@ -156,20 +156,27 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'gameover';
         finalScoreEl.textContent = score;
         scoreDisplay.classList.add('hidden');
-        gameOverMenu.classList.remove('hidden');
+        // Keep level display visible, remove any animation classes
+        levelDisplay.classList.remove('level-in', 'level-out');
+
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         
-        // Add the final frame to the replay
+        // Add the final frame to the replay, ensuring level is included
         replayFrames.push({
             angle,
             targetStartAngle,
             targetSize,
             score,
+            level, 
             success: false,
             timestamp: performance.now(),
         });
 
-        // The last drawn frame from gameLoop will remain visible.
+        // After 3 seconds, hide the level display and show the game over menu.
+        setTimeout(() => {
+            levelDisplay.classList.add('hidden');
+            gameOverMenu.classList.remove('hidden');
+        }, 3000);
     }
 
     function draw() {
